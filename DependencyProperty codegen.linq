@@ -10,16 +10,18 @@
   <Namespace>System.Windows</Namespace>
 </Query>
 
-#define USING_GET_ONLY_PROPERTY_SYNTAX // using new uwp/uno style, otherwise using legacy style with static field
-//#define USING_CS71_DEFAULT_LITERAL (DONT USE THIS FOR STRUCT TYPE)
-#define USING_EXPLICIT_CAST_FOR_SIMPLE_PROP
-//#define USING_UNO_CORE_MAYBE_CAST
+#define USE_GET_ONLY_PROPERTY_SYNTAX // using new uwp/uno style, otherwise using legacy style with static field
+//#define USE_CS71_DEFAULT_LITERAL (DONT USE THIS FOR NON-REF TYPE)
+//#define USE_UNO_CORE_MAYBE_CAST // avoid using this
+//#define USE_INSTANCED_HANDLER
+//#define USE_INSTANCED_HANDLER_WITH_EXPLICIT_CAST
 #define INDENT_USING_TAB
+#define USE_UNO_IL_TRIM_OPTIMIZATION // to use in uno public libraries, or projects where applicable (note: only applicable to attached property)
 
 void Main()
 {
-	var owner = "SelectorExtensions"; // DP.OwnerType: class which this property is place under
-	var control = "PipsPager"; // class which this property can be set on; the least restrictive class is 'DependencyObject'
+	var owner = "ItemsRepeaterExtensions"; // DP.OwnerType: class which this property is place under
+	var control = "ItemsRepeater"; // class which this property can be set on; the least restrictive class is 'DependencyObject'
 
 	var properties = new List<PropertyDefinition>
 	{
@@ -30,7 +32,13 @@ void Main()
 		//new ("MaterialVisibleOn", "VisiblePlatforms", default ),
 		//new ("ModelLanguage", "string", default),
 		//new ("SomeEnumProperty", "MyEnum", default),
-		new ("PipsPager", "Selector", HasHandler: true),
+		
+		//new ("IsSynchronizingSelection", "bool", HasHandler: false),
+		//new ("SelectedItem", "object", HasHandler: true),
+		//new ("SelectedItems", "IList<object>", HasHandler: true),
+		//new ("SelectedIndex", "int", HasHandler: true),
+		//new ("SelectedIndexes", "IList<int>", HasHandler: true),
+		new ("SelectionMode", "ItemsSelectionMode", "(ItemsSelectionMode)0", HasHandler: true),
 	};
 
 	Util.AutoScrollResults = false;
@@ -42,10 +50,10 @@ void Main()
 			: DependencyPropertyCodeGenerator.GenerateAttachedProperty(owner, control, x.Name, x.Type, x.DefaultValue, x.HasHandler == true)
 		)
 	));
-	if (properties.Where(x => x.HasHandler == true).ToArray() is { Length: >0 } needHandlers)
+	if (properties.Where(x => x.HasHandler == true).ToArray() is { Length: > 0 } needHandlers)
 	{
 		DumpCode(string.Join("\n", needHandlers
-			.Select(x => DependencyPropertyCodeGenerator.GenerateChangedHandler(control, x.Name, x.Type, owner == control))
+			.Select(x => DependencyPropertyCodeGenerator.GenerateChangedHandler(control, x.Name, x.Type))
 		));
 	}
 
@@ -65,80 +73,80 @@ public static class DependencyPropertyCodeGenerator
 		var propertyMetadataParams = new[]
 		{
 			defaultValue ?? FormatDefaultValue(type),
-			withHandler
-#if USING_EXPLICIT_CAST_FOR_SIMPLE_PROP
-				? $"(s, e) => (({owner})s).On{name}Changed(e)"
-#else
-				? $"(s, e) => (s as {owner})?.On{name}Changed(e)"
-#endif
-				: default
+			withHandler ? FormatPropertyChangedCallback(owner, name) : default
 		};
 
-		return $@"
-#region DependencyProperty: {name}
+		return $$"""
+			#region DependencyProperty: {{name}}
 
-{FormatDependencyProperty(name)} = DependencyProperty.Register(
-    nameof({name}),
-    typeof({type}),
-    typeof({owner}),
-    new PropertyMetadata({string.Join(", ", propertyMetadataParams.TrimNull())}));
+			{{FormatDependencyProperty(name)}} = DependencyProperty.Register(
+			    nameof({{name}}),
+			    typeof({{type}}),
+			    typeof({{owner}}),
+			    new PropertyMetadata({string.Join(", ", propertyMetadataParams.TrimNull())}));
 
-public {type} {name}
-{{
-    get => ({type})GetValue({name}Property);
-    set => SetValue({name}Property, value);
-}}
+			public {{type}} {{name}}
+			{
+			    get => ({{type}})GetValue({{name}}Property);
+			    set => SetValue({{name}}Property, value);
+			}
 
-#endregion".TrimStart().FormatCode().Replace("\n\0", "");
+			#endregion"
+			""".FormatIndentation();
 	}
 	public static string GenerateAttachedProperty(string owner, string host, string name, string type, string defaultValue = null, bool withHandler = false)
 	{
-		
 		var propertyMetadataParams = new[]
 		{
 			defaultValue ?? FormatDefaultValue(type),
-			withHandler
-#if USING_UNO_CORE_MAYBE_CAST
-				? $"(d, e) => d.Maybe<{host}>(control => On{name}Changed(control, e))"
-#else
-				? $"On{name}Changed"
-#endif
-				: default
+			withHandler ? FormatPropertyChangedCallback(host, name) : default
 		};
+		string GetMarker(string accessor) =>
+#if USE_UNO_IL_TRIM_OPTIMIZATION
+			$"[DynamicDependency(nameof({accessor}{name}))]\n";
+#else
+			null;
+#endif
 
 		// DO: AbcProperty = DP.RegisterAttached("Abc"
 		// DONT: Abc = DP.RegisterAttached(nameof(Abc)
 		// This cause the property changed handler not being fired at all
-		return $@"
-#region DependencyProperty: {name}
+		return $"""
+			#region DependencyProperty: {name}
 
-{FormatDependencyProperty(name)} = DependencyProperty.RegisterAttached(
-	""{name}"",
-	typeof({type}),
-	typeof({owner}),
-	new PropertyMetadata({string.Join(", ", propertyMetadataParams.TrimNull())}));
+			{FormatDependencyProperty(name, attached: true)} = DependencyProperty.RegisterAttached(
+				"{name}",
+				typeof({type}),
+				typeof({owner}),
+				new PropertyMetadata({string.Join(", ", propertyMetadataParams.TrimNull())}));
 
-public static {type} Get{name}({host} obj) => ({type})obj.GetValue({name}Property);
-public static void Set{name}({host} obj, {type} value) => obj.SetValue({name}Property, value);
+			{GetMarker("Set")}public static {type} Get{name}({host} obj) => ({type})obj.GetValue({name}Property);
+			{GetMarker("Get")}public static void Set{name}({host} obj, {type} value) => obj.SetValue({name}Property, value);
 
-#endregion".TrimStart().FormatCode();
+			#endregion
+			""".FormatIndentation();
 	}
-	public static string GenerateChangedHandler(string host, string name, string type, bool useMemberMethod)
+	public static string GenerateChangedHandler(string host, string name, string type)
 	{
-		return useMemberMethod
-			? $"private void On{name}Changed(DependencyPropertyChangedEventArgs e) => throw new NotImplementedException();"
-#if USING_UNO_CORE_MAYBE_CAST
-			: $"private static void On{name}Changed({host} control, DependencyPropertyChangedEventArgs e) => throw new NotImplementedException();";
+#if USE_INSTANCED_HANDLER
+			return $"private void On{name}Changed(DependencyPropertyChangedEventArgs e) => throw new NotImplementedException();";
 #else
-			: $"private static void On{name}Changed(DependencyObject sender, DependencyPropertyChangedEventArgs e) => throw new NotImplementedException();";
+			return $"private static void On{name}Changed(DependencyObject sender, DependencyPropertyChangedEventArgs e) => throw new NotImplementedException();";
 #endif
 	}
 
-	private static string FormatDependencyProperty(string name)
+	private static string FormatDependencyProperty(string name, bool attached = false)
 	{
+		var marker =
+#if USE_UNO_IL_TRIM_OPTIMIZATION
+			attached ? $"[DynamicDependency(nameof(Get{name}))] " : "";
+#else
+			"";
+#endif
+
 		return
-#if USING_GET_ONLY_PROPERTY_SYNTAX
-			$"public static DependencyProperty {name}Property {{ get; }}";
+#if USE_GET_ONLY_PROPERTY_SYNTAX
+			$"public static DependencyProperty {name}Property {{ {marker}get; }}";
 #else
 			$"public static readonly DependencyProperty {name}Property";
 #endif
@@ -146,14 +154,26 @@ public static void Set{name}({host} obj, {type} value) => obj.SetValue({name}Pro
 	private static string FormatDefaultValue(string type)
 	{
 		return
-#if USING_CS71_DEFAULT_LITERAL
+#if USE_CS71_DEFAULT_LITERAL
 			"default";
 #else
 			$"default({type})";
 #endif
 	}
-	
-	private static string FormatCode(this string value)
+	private static string FormatPropertyChangedCallback(string host, string name)
+	{
+#if USE_INSTANCED_HANDLER
+#if USE_INSTANCED_HANDLER_WITH_EXPLICIT_CAST
+				return $"(s, e) => (({host})s).On{name}Changed(e)";
+#else
+				return $"(s, e) => (s as {host})?.On{name}Changed(e)";
+#endif
+#else
+				return $"On{name}Changed";
+#endif
+	}
+
+	private static string FormatIndentation(this string value)
 	{
 #if INDENT_USING_TAB
 		return value.Replace("    ", "\t");
