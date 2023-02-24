@@ -91,7 +91,7 @@ public static class DependencyPropertyCodeGenerator
 			    set => SetValue({{name}}Property, value);
 			}
 
-			#endregion"
+			#endregion
 			""".FormatIndentation();
 	}
 	public static string GenerateAttachedProperty(string owner, string host, string name, string type, string defaultValue = null, bool withHandler = false)
