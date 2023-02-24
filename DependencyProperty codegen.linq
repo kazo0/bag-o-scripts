@@ -83,7 +83,7 @@ public static class DependencyPropertyCodeGenerator
 			    nameof({{name}}),
 			    typeof({{type}}),
 			    typeof({{owner}}),
-			    new PropertyMetadata({string.Join(", ", propertyMetadataParams.TrimNull())}));
+			    new PropertyMetadata({{string.Join(", ", propertyMetadataParams.TrimNull())}}));
 
 			public {{type}} {{name}}
 			{
