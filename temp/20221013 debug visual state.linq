@@ -23,8 +23,9 @@ public static class Global
 void Main() => DebugVisualState(
 	//@"C:\Program Files (x86)\Windows Kits\10\DesignTime\CommonConfiguration\Neutral\UAP\10.0.22000.0\Generic\generic.xaml", 
 	//new ResourceKey(TargetType: "ToggleSwitch")
-	@"D:\code\uno\framework\uno\src\Uno.UI.FluentTheme.v2\Resources\Version2\PriorityDefault\ToggleSwitch_themeresources.xaml",
-	"DefaultToggleSwitchStyle"
+	@"D:\code\uno\framework\Uno\src\Uno.UI\Microsoft\UI\Xaml\Controls\ProgressBar\ProgressBar.xaml",
+	//"KeyboardButtonStyle"
+	new ResourceKey(TargetType: "local:ProgressBar")
 );
 
 void DebugVisualState(string path, ResourceKey key)
@@ -47,12 +48,12 @@ void DebugVisualState(string path, ResourceKey key)
 			{
 				vsg.VisualStates.SelectMany(vs => vs.Setters.Select(x => new { Source = vs.Name, x.Target, x.Value })),
 				vsg.VisualStates.SelectMany(vs => (vs.Storyboard?.Children).Safe().Select(x => new { Source = vs.Name, Target = x.TargetName + x.TargetProperty?.Prefix("."), Value = (object)x.Value })),
-				vsg.Transitions.SelectMany(t => (t.Storyboard.Children).Safe().Select(x => new { Source = $"{t.From}->{t.To}", Target = x.TargetName + x.TargetProperty?.Prefix("."), Value = (object)x.Value })),
+				vsg.Transitions.SelectMany(t => (t.Storyboard?.Children).Safe().Select(x => new { Source = $"{t.From}->{t.To}", Target = x.TargetName + x.TargetProperty?.Prefix("."), Value = (object)x.Value })),
 			}
 			.SelectMany(row => row.Safe().Select(x => new { Source = $"{vsg.Name}\\{x.Source}", x.Target, x.Value }))
 		)
 		.Select(x => new { x.Target, x.Source, x.Value })
-		.OrderBy(x => x.Target).ThenBy(x => x.Source)
+		.OrderBy(x => x.Target).ThenBy(x => !x.Source.Contains("->")).ThenBy(x => x.Source)
 		.Dump("All Flattened", 1);
 }
 
@@ -737,6 +738,8 @@ public record Timeline(string Type)
 				"EasingDoubleKeyFrame" => $"{Value()} @{KeyTime()} f={frame.Attribute("EasingFunction")}",
 				"LinearDoubleKeyFrame" => $"{Value()} @{KeyTime()} f=Linear",
 				"SplineDoubleKeyFrame" => $"{Value()} @{KeyTime()} f=Spline",
+				
+				"LinearColorKeyFrame" => $"{Value()} @{KeyTime()} f=Linear",
 				
 				_ => throw new NotImplementedException($"{e.Name.LocalName} > {frame.Name.Pretty()}").PreDump(frame),
 			};
