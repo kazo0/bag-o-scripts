@@ -23,16 +23,16 @@ public static class Global
 void Main() => DebugVisualState(
 	//@"C:\Program Files (x86)\Windows Kits\10\DesignTime\CommonConfiguration\Neutral\UAP\10.0.22000.0\Generic\generic.xaml", 
 	//new ResourceKey(TargetType: "ToggleSwitch")
-	@"D:\code\uno\framework\Uno\src\Uno.UI\Microsoft\UI\Xaml\Controls\ProgressBar\ProgressBar.xaml",
-	//"KeyboardButtonStyle"
-	new ResourceKey(TargetType: "local:ProgressBar")
+	@"D:\code\uno\framework\Uno\src\Uno.UI.FluentTheme.v2\Resources\Version2\PriorityDefault\CheckBox_themeresources.xaml",
+	"DefaultCheckBoxStyle"
+	//new ResourceKey(TargetType: "CheckBox") // can use xmlns localname here, eg: utu:Control
 );
 
 void DebugVisualState(string path, ResourceKey key)
 {
-	var vsgs = ScuffedXamlParser.Load<ResourceDictionary>(path).Dump("ResourceDictionary", 0)
-		[key]?.As<Style>().Dump($"Style: {key}", 0)
-		//[TargetType: "local:NavigationView"]?.As<Style>()
+	var rd = ScuffedXamlParser.Load<ResourceDictionary>(path).Dump("ResourceDictionary", 0);
+	var style = rd[key]?.As<Style>().Dump($"Style: {key}", 0);
+	var vsgs = style
 		?.Setters.FirstOrDefault(x => x.Property == "Template")?.Value.As<ControlTemplate>()
 		?.TemplateRoot.AttachedProperties["VisualStateManager.VisualStateGroups"]?.As<object[]>()
 		?.Cast<VisualStateGroup>()
@@ -385,7 +385,7 @@ public record Style(string BasedOn = null, string TargetType = null)
 }
 public record Setter(string Property, string Target, object Value)
 {
-	public object ToDump() => $"{Property ?? Target} -> {Value}";
+	//public object ToDump() => $"{Property ?? Target} -> {Value}";
 
 	public static Setter Parse(XElement e)
 	{
