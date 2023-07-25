@@ -473,6 +473,7 @@ public class Script
 					x.RefValue.Type,
 					Value = FormatValue(x.RefValue.Value),
 				})
+				.ToArray()
 				.Dump();
 			Clickable.CopyText("Copy as markdown table", table.ToMarkdownTable()).Dump();
 						
@@ -510,18 +511,21 @@ public class Script
 			}
 			string InferTypenameFromKey(string key)
 			{
-				var result = default(string);
-				if (key.EndsWith("Brush"))
+				var result = key switch
 				{
-					return "Brush";
-				}
+					_ when key.EndsWith("Brush") => "Brush",
+					_ when key.EndsWith("Height") => "Double",
+					_ when key.EndsWith("Width") => "Double",
+					
+					_ => null,
+				};
 
 				if (result != null)
 				{
 					Util.WithStyle($"Inferring '{key}' as type '{result}'", "color: orange").Dump();
 				}
 				
-				return null;
+				return result;
 			}
 			string GetTypename(object value) => value switch
 			{
