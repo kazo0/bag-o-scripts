@@ -460,6 +460,7 @@ public class Script
 			
 			var table = root.Values
 				.Where(x => !x.IsStaticResourceFor<Style>())
+				.Where(x => x is not StaticResource) // only theme resource should be included for whats considered LightWeight
 				.Select(x =>
 					x is StaticResource sr ? new { x.Key, RefValue = GetResource(sr.Value) } :
 					x is ThemeResource tr ? new { x.Key, RefValue = GetResource(tr.DarkValue) } :
