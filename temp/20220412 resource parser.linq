@@ -10,8 +10,9 @@
   <Namespace>TextCopy</Namespace>
 </Query>
 
-#define SKIP_ALL_NOTIMPLEMENTED_OBJECT
-//#define SKIP_NOTIMPLEMENTED_MSG_FOR_KNOWN_OBJECT
+#define THROW_ON_NOTIMPLEMENTED_OBJECT
+#define ENABLE_GENERIC_VALUE_OBJECT_PARSING
+#define REPLACE_UNO_PLATFORM_XMLNS
 #define ALLOW_DUPLICATED_KEYS // temp workaround for platform specifics
 #define ALLOW_DUPLICATED_KEYS_WITHOUT_WARNING
 
@@ -30,7 +31,7 @@ public class Script
 	 	//Specialized.ListExposedToolkitV2Styles();
 		//Specialized.CheckLightWeightResourceParity(@"D:\code\uno\platform\Uno.Themes\src\library\Uno.Material\Styles\Controls\v2\RadioButton.xaml");
 		Specialized.ExtractLightWeightResources(
-			@"D:\code\uno\platform\Uno.Themes\src\library\Uno.Material\Styles\Controls\v2\RadioButton.xaml",
+			@"D:\code\uno\platform\Uno.Themes\src\library\Uno.Material\Styles\Controls\v2\TextBox.xaml",
 			@"D:\code\uno\platform\Uno.Themes\src\library\Uno.Material\Styles\Application\Common\Fonts.xaml",
 			@"D:\code\uno\platform\Uno.Themes\src\library\Uno.Material\Styles\Application\v2\Typography.xaml",
 			@"D:\code\uno\platform\Uno.Themes\src\library\Uno.Material\Styles\Application\v2\SharedColors.xaml",
@@ -448,6 +449,7 @@ public class Script
 		}
 		public static void ExtractLightWeightResources(string inspectFile, params string[] additionalResourceFile)
 		{
+			var root = (ResourceDictionary)ScuffedXamlParser.Load(inspectFile).Dump(inspectFile, 0);
 			var resources = additionalResourceFile.Aggregate(
 				new ResourceDictionary(), 
 				(rd, file) => 
@@ -456,7 +458,6 @@ public class Script
 					return rd;
 				}
 			);
-			var root = (ResourceDictionary)ScuffedXamlParser.Load(inspectFile);
 			
 			var table = root.Values
 				.Where(x => !x.IsStaticResourceFor<Style>())
@@ -479,7 +480,7 @@ public class Script
 			{
 				if (!(value is StaticResourceRef or ThemeResource))
 				{
-					return (value?.GetType().Name, value);
+					return (GetTypename(value), value);
 				}
 				
 				var innerKey = default(string);
@@ -505,7 +506,7 @@ public class Script
 					else break;
 				}
 				
-				return (value?.GetType().Name, innerKey);
+				return (GetTypename(value), innerKey);
 			}
 			string InferTypenameFromKey(string key)
 			{
@@ -522,15 +523,18 @@ public class Script
 				
 				return null;
 			}
-			string FormatValue(object value)
+			string GetTypename(object value) => value switch
 			{
-				return value switch
-				{
-					GridLength gl => gl.Value,
-					
-					_ => value?.ToString(),
-				};
-			}
+				GenericValueObject gvo => gvo.Typename,
+				
+				_ => value?.GetType().Name,
+			};
+			string FormatValue(object value) => value switch
+			{
+				GenericValueObject gvo => gvo.Value,
+				
+				_ => value?.ToString(),
+			};
 		}
 	}
 }
@@ -542,6 +546,8 @@ public record DependencyObject
 	public string GetDP(string dp) => _properties.TryGetValue(dp, out var value) ? value : default;
 	public void SetDP(string dp, string value) => _properties[dp] = value;
 }
+public record Thickness(double Left, double Top, double Right, double Bottom);
+public record CornerRadius(double TopLeft, double TopRight, double BottomRight, double BottomLeft);
 public record Color(byte A, byte R, byte G, byte B);
 public record SolidColorBrush(Color Color = default, double Alpha = double.NaN) : DependencyObject;
 public record Style(string Key = null, string TargetType = null, string BasedOn = null)
@@ -591,8 +597,7 @@ public record Setter(string Property, string Value)
 {
 }
 
-public record FontFamily(string Name);
-public record GridLength(string Value);
+public record GenericValueObject(string Typename, string Value);
 
 public record ResourceKey(string Key, string TargetType = null) : IComparable
 {
@@ -747,25 +752,26 @@ public static class ScuffedXamlParser
 	}
 	public static object Parse(XElement e)
 	{
-		return (e.Name.Namespace.NamespaceName, e.Name.LocalName) switch
+		return e.GetNameParts() switch
 		{
 			(NSX, nameof(Int32)) => int.Parse(e.Value),
 			(NSX, nameof(Double)) => double.Parse(e.Value),
 			(NSX, nameof(String)) => e.Value,
 			(NSPresentation, nameof(ResourceDictionary)) => ResourceDictionary.Parse(e),
-			(NSPresentation, nameof(FontFamily)) => new FontFamily(e.Value),
-			(NSPresentation, nameof(GridLength)) => new GridLength(e.Value),
+			(NSPresentation, nameof(Thickness)) => ParseThickness(e.Value),
+			(NSPresentation, nameof(CornerRadius)) => ParseCornerRadius(e.Value),
 			(NSPresentation, nameof(Color)) => ParseColor(e.Value),
 			(NSPresentation, nameof(SolidColorBrush)) => ParseSolidColorBrush(e),
 			(NSPresentation, nameof(StaticResource)) => ParseStaticResource(e),
 			(_/*NSPresentation*/, nameof(Style)) => Style.ParseStyle(e),
-#if SKIP_NOTIMPLEMENTED_MSG_FOR_KNOWN_OBJECT
-			(NSPresentation, "GridLength") => null,
-			(NSPresentation, "CornerRadius") => null,
+#if ENABLE_GENERIC_VALUE_OBJECT_PARSING
+			(NSPresentation, "FontFamily") => new GenericValueObject("FontFamily", e.Value),
+			(NSPresentation, "GridLength") => new GenericValueObject("GridLength", e.Value),
+			(_, "LottieVisualSource") => new GenericValueObject("LottieVisualSource", e.Attribute("UriSource").Value),
 #endif
 
 			_ when e.Name.LocalName.EndsWith("Converter") => null,
-#if SKIP_ALL_NOTIMPLEMENTED_OBJECT
+#if !THROW_ON_NOTIMPLEMENTED_OBJECT
 			_ => LogNotImplementedMessage(e.Name.LocalName),
 #else
 			_ => throw new NotImplementedException(e.Name.ToString()),
@@ -779,6 +785,54 @@ public static class ScuffedXamlParser
 		}
 	}
 
+	public static Thickness ParseThickness(string raw)
+	{
+		try
+		{	        
+			return raw.Split(',') switch
+			{
+				[var uniform] when double.TryParse(uniform, out var u) => new(u, u, u, u),
+				[var lr, var tb] when 
+					double.TryParse(lr, out var lrv) &&
+					double.TryParse(tb, out var tbv)
+					=> new(lrv, tbv, lrv, tbv),
+				[var l, var t, var r, var b] when 
+					double.TryParse(l, out var lv) &&
+					double.TryParse(t, out var tv) &&
+					double.TryParse(r, out var rv) &&
+					double.TryParse(b, out var bv)
+					=> new(lv, tv, rv, bv),
+				
+				_ => throw new ArgumentException("Invalid corner-radius syntax"),
+			};
+		}
+		catch (Exception ex)
+		{
+			throw new ArgumentException("Invalid corner-radius literal: " + raw, ex);
+		}
+	}
+	public static CornerRadius ParseCornerRadius(string raw)
+	{
+		try
+		{	        
+			return raw.Split(',') switch
+			{
+				[var uniform] when double.TryParse(uniform, out var u) => new(u, u, u, u),
+				[var tl, var tr, var br, var bl] when 
+					double.TryParse(tl, out var tlv) &&
+					double.TryParse(tr, out var trv) &&
+					double.TryParse(br, out var brv) &&
+					double.TryParse(bl, out var blv)
+					=> new(tlv, trv, brv, blv),
+				
+				_ => throw new ArgumentException("Invalid corner-radius syntax"),
+			};
+		}
+		catch (Exception ex)
+		{
+			throw new ArgumentException("Invalid corner-radius literal: " + raw, ex);
+		}
+	}
 	public static Color ParseColor(string raw)
 	{
 		// #rgb (need to check definition...), #rrggbb, #aarrggbb
@@ -850,9 +904,43 @@ public static class XElementExtensions
 }
 public static class XNameExtensions
 {
+	public static (string Xmlns, string LocalName) GetNameParts(this XElement e, bool trimApiContract = true) => e.Name.GetNameParts(trimApiContract);
+	public static (string Xmlns, string LocalName) GetNameParts(this XAttribute e, bool trimApiContract = true) => e.Name.GetNameParts(trimApiContract);
+	public static (string Xmlns, string LocalName) GetNameParts(this XName name, bool trimApiContract = true)
+	{
+		var xmlns = name.NamespaceName;
+		if (trimApiContract && xmlns.IndexOf('?') is var index && index > 0)
+		{
+			xmlns = xmlns[..(index)];
+		}
+#if REPLACE_UNO_PLATFORM_XMLNS
+		if (xmlns.StartsWith("http://uno.ui/"))
+		{
+			xmlns = NSPresentation;
+		}
+#endif
+
+		return (xmlns, name.LocalName);
+	}
+	public static string Pretty(this XName name)
+	{
+		var (xmlns, localName) = name.GetNameParts();
+
+		return $"{{{xmlns}}}{localName}";
+	}
+
+	public static bool Match(this XName x, string xmlns, string localName) => x.GetNameParts() == (xmlns, localName);
+
+	public static bool Is<T>(this XName x) => x.LocalName == typeof(T).Name;
+	public static bool Is(this XName x, string name) => x.LocalName == name;
+	public static bool IsAnyOf(this XName x, params string[] names) => names.Contains(x.LocalName);
+
 	public static bool IsMemberOf<T>(this XName x) => x.IsMemberOf(typeof(T));
 	public static bool IsMemberOf(this XName x, Type type) => x.IsMemberOf(type.Name);
 	public static bool IsMemberOf(this XName x, string typeName) => x.IsMemberOf(typeName, out var _);
+	public static bool IsMemberOf<T>(this XName x, string memberName) => x.IsMemberOf(typeof(T), memberName);
+	public static bool IsMemberOf(this XName x, Type type, string memberName) => x.IsMemberOf(type.Name, memberName);
+	public static bool IsMemberOf(this XName x, string typeName, string memberName) => x.LocalName == $"{typeName}.{memberName}";
 	public static bool IsMemberOf<T>(this XName x, out string memberName) => x.IsMemberOf(typeof(T), out memberName);
 	public static bool IsMemberOf(this XName x, Type type, out string memberName) => x.IsMemberOf(type.Name, out memberName);
 	public static bool IsMemberOf(this XName x, string typeName, out string memberName)
@@ -863,6 +951,8 @@ public static class XNameExtensions
 
 		return memberName != default;
 	}
+
+	public static XElement GetMember(this XElement e, string memberName) => e.Element(e.Name.Namespace + $"{e.Name.LocalName}.{memberName}");
 }
 public static class XAttributeExtensions
 {
