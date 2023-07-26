@@ -43,8 +43,13 @@ public class Script
 			@"D:\code\uno\platform\Uno.Themes\src\library\Uno.Material\Styles\Controls\v2\_Resources.xaml",
 			@"D:\code\uno\platform\Uno.Themes\src\library\Uno.Material\Styles\Controls\v2\TextBlock.xaml"
 		}.Aggregate(new ResourceDictionary(), (acc, file) => acc.Merge((ResourceDictionary)ScuffedXamlParser.Load(file)));
-		foreach (var control in Directory.GetFiles(@"D:\code\uno\platform\Uno.Themes\src\library\Uno.Material\Styles\Controls\v2\", "*.xaml"))
-			Specialized.ExtractLightWeightResources(control, additionalResources);
+
+		string.Join("\n\n", Directory.GetFiles(@"D:\code\uno\platform\Uno.Themes\src\library\Uno.Material\Styles\Controls\v2\", "*.xaml")
+			.Prepend(@"D:\code\uno\platform\Uno.Themes\src\library\Uno.Material\Styles\Application\v2\Typography.xaml")
+			.Select(x => string.Join("\n", $"# {Path.GetFileName(x)}", Specialized.ExtractLightWeightResources(x, additionalResources)))
+		)/*.Dump("lightweight resources")*/;
+		//foreach (var control in Directory.GetFiles(@"D:\code\uno\platform\Uno.Themes\src\library\Uno.Material\Styles\Controls\v2\", "*.xaml"))
+		//	Specialized.ExtractLightWeightResources(control, additionalResources);
 
 		//ListColors(@"D:\code\uno\platform\Uno.Themes\src\library\Uno.Material\Styles\Application\v1\ColorPalette.xaml");
 		//ListColors(@"D:\code\uno\platform\Uno.Themes\src\library\Uno.Material\Styles\Application\v2\SharedColorPalette.xaml");
@@ -463,7 +468,7 @@ public class Script
 			else
 				Util.WithStyle($"All {themeResources.Length} theme-resources are in parity", $"color: green").Dump();
 		}
-		public static void ExtractLightWeightResources(string inspectFile, ResourceDictionary additionalResources)
+		public static string ExtractLightWeightResources(string inspectFile, ResourceDictionary additionalResources)
 		{
 			var root = (ResourceDictionary)ScuffedXamlParser.Load(inspectFile).Dump(inspectFile, 0);
 			var resources = new ResourceDictionary(additionalResources).Merge(root);
@@ -484,7 +489,10 @@ public class Script
 				})
 				.ToArray()
 				.Dump();
-			Clickable.CopyText("Copy as markdown table", table.ToMarkdownTable()).Dump();
+			var markdown = table.ToMarkdownTable();
+			Clickable.CopyText("Copy as markdown table", markdown).Dump();
+			
+			return markdown;
 
 			(string Type, object Value) GetResource(object value)
 			{
