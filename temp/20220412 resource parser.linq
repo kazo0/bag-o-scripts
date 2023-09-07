@@ -29,9 +29,10 @@ public class Script
 		//Specialized.ListExposedThemeV2Styles();
 		//Specialized.ListExposedCupertinoStyles();
 		//Specialized.ListExposedToolkitV2Styles();
-		//Specialized.CheckLightWeightResourceParity(@"D:\code\uno\platform\Uno.Themes\src\library\Uno.Material\Styles\Controls\v2\RadioButton.xaml");
-		
-		var additionalResources = new[]
+		Specialized.DiffThemeV2InnerResources();
+		//Specialized.CheckLightWeightResourceParity(@"D:\code\uno\platform\Uno.Themes\src/library/Uno.Material/Styles/Controls/v2/NavigationView.xaml");
+
+		/*var additionalResources = new[]
 		{
 			@"D:\code\uno\framework\Uno\src\Uno.UI\UI\Xaml\Style\Generic\SystemResources.xaml",
 			@"D:\code\uno\framework\Uno\src\Uno.UI.FluentTheme.v2\themeresources_v2.xaml",
@@ -42,12 +43,14 @@ public class Script
 			@"D:\code\uno\platform\Uno.Themes\src\library\Uno.Material\Styles\Application\v2\SharedColorPalette.xaml",
 			@"D:\code\uno\platform\Uno.Themes\src\library\Uno.Material\Styles\Controls\v2\_Resources.xaml",
 			@"D:\code\uno\platform\Uno.Themes\src\library\Uno.Material\Styles\Controls\v2\TextBlock.xaml"
-		}.Aggregate(new ResourceDictionary(), (acc, file) => acc.Merge((ResourceDictionary)ScuffedXamlParser.Load(file)));
-
-		string.Join("\n\n", Directory.GetFiles(@"D:\code\uno\platform\Uno.Themes\src\library\Uno.Material\Styles\Controls\v2\", "*.xaml")
-			.Prepend(@"D:\code\uno\platform\Uno.Themes\src\library\Uno.Material\Styles\Application\v2\Typography.xaml")
-			.Select(x => string.Join("\n", $"# {Path.GetFileName(x)}", Specialized.ExtractLightWeightResources(x, additionalResources)))
-		)/*.Dump("lightweight resources")*/;
+		}.Aggregate(new ResourceDictionary(), (acc, file) => acc.Merge((ResourceDictionary)ScuffedXamlParser.Load(file)));*/
+		//Specialized.CheckLightWeightResourceParity(@"D:\code\uno\platform\Uno.Themes\src/library/Uno.Material/Styles/Controls/v2/ToggleSwitch.xaml");
+		//Specialized.ExtractLightWeightResources(@"D:\code\uno\platform\Uno.Themes\src\library\Uno.Material\Styles\Controls\v2\Button.xaml", additionalResources);
+		//Specialized.ExtractLightWeightResources(@"D:\code\uno\platform\Uno.Themes\src\library\Uno.Material\Styles\Controls\v2\Slider.xaml", additionalResources);
+		//string.Join("\n\n", Directory.GetFiles(@"D:\code\uno\platform\Uno.Themes\src\library\Uno.Material\Styles\Controls\v2\", "*.xaml")
+		//	.Prepend(@"D:\code\uno\platform\Uno.Themes\src\library\Uno.Material\Styles\Application\v2\Typography.xaml")
+		//	.Select(x => string.Join("\n", $"# {Path.GetFileName(x)}", Specialized.ExtractLightWeightResources(x, additionalResources)))
+		//).OnDemand("Click to expand").Dump("All in one");
 		//foreach (var control in Directory.GetFiles(@"D:\code\uno\platform\Uno.Themes\src\library\Uno.Material\Styles\Controls\v2\", "*.xaml"))
 		//	Specialized.ExtractLightWeightResources(control, additionalResources);
 
@@ -132,6 +135,7 @@ public class Script
 	}
 	private static void SpecializedListColorTheme(string paletteFile, string brushFile, bool generateBrushesBasedOnColorAndOpacity = false)
 	{
+#if false
 		var paletteRD = (ResourceDictionary)ScuffedXamlParser.Parse(XDocument.Load(paletteFile).Root);
 		var brushRD = (ResourceDictionary)ScuffedXamlParser.Parse(XDocument.Load(brushFile).Root);
 
@@ -155,10 +159,10 @@ public class Script
 			.Select(x => new
 			{
 				x.Key,
-				Color = IKeyedResource.GetKeyFromMarkup(x.Value.GetDP("Color")),
-				Opacity = IKeyedResource.GetKeyFromMarkup(x.Value.GetDP("Opacity")),
-				ColorValue = paletteRD.TryGetValue(IKeyedResource.GetKeyFromMarkup(x.Value.GetDP("Color")), out var color) ? color : default,
-				OpacityValue = paletteRD.TryGetValue(IKeyedResource.GetKeyFromMarkup(x.Value.GetDP("Opacity")), out var opacity) ? opacity : default,
+				//Color = IKeyedResource.GetKeyFromMarkup(x.Value.GetDP("Color")),
+				//Opacity = IKeyedResource.GetKeyFromMarkup(x.Value.GetDP("Opacity")),
+				//ColorValue = paletteRD.TryGetValue(IKeyedResource.GetKeyFromMarkup(x.Value.GetDP("Color")), out var color) ? color : default,
+				//OpacityValue = paletteRD.TryGetValue(IKeyedResource.GetKeyFromMarkup(x.Value.GetDP("Opacity")), out var opacity) ? opacity : default,
 			})
 			.OrderBy(x => x.Color)
 			.ThenBy(x => x.Opacity)
@@ -214,6 +218,7 @@ public class Script
 			.JoinBy("\n").Dump("all brushes");
 			brushes.Select(x => x.Key.Key).Except(crossProducts.Select(x => x.Key)).Dump("missing brushes", 0);
 		}
+#endif
 	}
 	private static void ListStyles(string path)
 	{
@@ -250,31 +255,76 @@ public class Script
 	{
 		public static void ListExposedThemeV2Styles()
 		{
-			var styles = new ResourceDictionary();
+			var resources = new ResourceDictionary();
 			var controls = Directory.GetFiles(@"D:\code\uno\platform\Uno.Themes\src\library\Uno.Material\Styles\Controls\v2\", "*.xaml")
 				.Where(x => !Path.GetFileName(x).Contains('_'));
 			foreach (var control in controls)
 			{
 				//Util.Metatext($"Processing: {control}").Dump();
+				var filename = Path.GetFileNameWithoutExtension(control);
 				var document = XDocument.Load(control);
 				var root = (ResourceDictionary)ScuffedXamlParser.Parse(document.Root);
 
-				styles.Merge(root);
+				var filter = (filename switch
+				{
+					"ContentDialog" => "Button",
+					"DatePicker" => "Button",
+					"NavigationView" => "Button,SplitView,TextBlock,ContentControl",
+					"PasswordBox" => "Button",
+					"PipsPager.Base" => "Button",
+					"Slider" => "Thumb",
+					"TextBox" => "Button",
+
+					_ => "",
+				});
+				var filtered = root.Values
+					.Where(x =>
+						x is StaticResource { Value: Style { Key: string key, TargetType: string type } } &&
+						!filter.Split(',').Contains(type)
+					);
+				//filtered
+				//	.OfStaticResourceType<Style>()
+				//	.Select(x => new { x.Key, x.TargetType })
+				//	.Dump($"{Path.GetFileNameWithoutExtension(control)}: {filtered.OfStaticResourceType<Style>().Count()} styles", 0);
+
+				resources.AddRange(filtered);
 			}
 
-			var styleInfos = ParseGetStyleInfos(@"D:\code\uno\platform\Uno.Themes\src\library\Uno.Material\MaterialResourcesV2.cs");
-			styles.Values.OfStaticResourceType<Style>()
-				.OrderBy(x => x.TargetType)
-				.Join(styleInfos, style => style.Key, info => info.ResourceKey, (style, info) => new { Style = style, Info = info })
+			var _resources = (ResourceDictionary)ScuffedXamlParser.Load(@"D:\code\uno\platform\Uno.Themes\src\library\Uno.Material\Styles\Controls\v2\_Resources.xaml");
+			var implicitStyles = _resources.Values.OfStaticResourceType<Style>()
+				.Select(x => x.BasedOn)
+#if true // Themes 3.0
+				.Select(x => ((resources[x] as StaticResource)?.Value as Style)?.BasedOn)
+#endif
+				.ToArray()
+				.Dump("ImplicitStyles", 0);
+			var aliasMap = _resources.Values.Where(x => x.IsStaticResourceFor<StaticResourceRef>())
+				.Select(x => new { x.Key, Key2 = ((x as StaticResource)?.Value as StaticResourceRef)?.Key })
+				.ToDictionary(x => x.Key2, x => x.Key)
+				.Dump("Aliases", 0);
+
+			resources.Values.OfStaticResourceType<Style>()
+				.Where(x => x.Key != null)
+				.Where(x => x.Key is string k && !@"
+						MaterialDefault, MaterialBase, 
+						BaseStyle, BaseMaterial, BaseTextBlockStyle,
+						MUX_
+					".Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+					.SelectMany(x => x.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+					.Any(k.Contains)
+				)
 				.Select(x => new
 				{
-					x.Style.TargetType,
-					Key = Regex.Replace(x.Style.Key, "^(M3)?Material", ""),
-					x.Info.IsDefaultStyle
+					x.Key,
+					AliasedKey = aliasMap.TryGetValue(x.Key, out var key) ? key : "",
+					x.TargetType,
+					ImplicitStyle = implicitStyles.Contains(x.Key) ? "true" : "",
 				})
-				.Select(x => string.Join("|", x.TargetType, x.Key, x.IsDefaultStyle ? "True" : ""))
-				.Dump("ThemeV2Styles", 0);
+				.Dump("=== Style Exports ===", 0)
+				.ToCopyableMarkdownTable()
+				.Dump();
 		}
+		/*not updated since uno5*/
 		public static void ListExposedCupertinoStyles()
 		{
 			var styles = new ResourceDictionary();
@@ -305,30 +355,71 @@ public class Script
 		}
 		public static void ListExposedToolkitV2Styles()
 		{
-			var styles = new ResourceDictionary();
-			var controls = Directory.GetFiles(@"D:\code\uno\platform\Uno.UI.Toolkit\src\library\Uno.Toolkit.Material\Styles\Controls\v2\", "*.xaml")
+			var resources = new ResourceDictionary();
+			var controls = Directory.GetFiles(@"D:\code\uno\platform\Uno.Toolkit\src\library\Uno.Toolkit.Material\Styles\Controls\v2\", "*.xaml")
 				.Where(x => !Path.GetFileName(x).Contains('_'));
 
 			foreach (var control in controls)
 			{
 				//Util.Metatext($"Processing: {control}").Dump();
+				var filename = Path.GetFileNameWithoutExtension(control);
 				var document = XDocument.Load(control);
 				var root = (ResourceDictionary)ScuffedXamlParser.Parse(document.Root);
 
-				styles.Merge(root);
+				var filter = (filename switch
+				{
+					"Chip" => "Button",
+					"NavigationBar" => "utu:NavigationBarPresenter",
+					"TabBar" => "utu:TabBarSelectionIndicatorPresenter",
+
+					_ => "",
+				});
+				var filtered = root.Values
+					.Where(x =>
+						x is StaticResource { Value: Style { Key: string key, TargetType: string type } }
+							? !filter.Split(',').Contains(type)
+							: true
+					);
+				filtered
+					.OfStaticResourceType<Style>()
+					.Select(x => new { x.Key, x.TargetType })
+					.Dump($"{Path.GetFileNameWithoutExtension(control)}: {filtered.OfStaticResourceType<Style>().Count()} styles", 0);
+
+				resources.AddRange(filtered);
 			}
 
-			var styleInfos = ParseGetStyleInfos(@"D:\code\uno\platform\Uno.UI.Toolkit\src\library\Uno.Toolkit.Material\MaterialToolkitResourcesV2.cs");
-			styles.Values.OfStaticResourceType<Style>()
-				.OrderBy(x => x.TargetType)
-				.Join(styleInfos, style => style.Key, info => info.ResourceKey, (style, info) => new { Style = style, Info = info })
+			var _common = (ResourceDictionary)ScuffedXamlParser.Load(@"D:\code\uno\platform\Uno.Toolkit\src\library\Uno.Toolkit.Material\Styles\Controls\v2\_Common.xaml");
+			var implicitStyles = _common.Values.OfStaticResourceType<Style>()
+				.Select(x => x.BasedOn)
+#if true // Toolkit 4.2
+				//.Select(x => ((resources[x] as StaticResource)?.Value as Style)?.BasedOn)
+#endif
+				.ToArray()
+				.Dump("ImplicitStyles", 0);
+			var aliasMap = _common.Values.Where(x => x.IsStaticResourceFor<StaticResourceRef>())
+				.Select(x => new { x.Key, Key2 = ((x as StaticResource)?.Value as StaticResourceRef)?.Key })
+				.ToDictionary(x => x.Key2, x => x.Key)
+				.Dump("Aliases", 0);
+
+			resources.Values.OfStaticResourceType<Style>()
+				.Where(x => x.Key != null)
+				.Where(x => x.Key is string k && !@"
+						MaterialDefault, MaterialBase, 
+						BaseStyle, BaseMaterial, BaseTextBlockStyle,
+					".Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+					.SelectMany(x => x.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+					.Any(k.Contains)
+				)
 				.Select(x => new
 				{
-					x.Style.TargetType,
-					Key = Regex.Replace(x.Style.Key, "^M3Material", ""),
-					x.Info.IsDefaultStyle
+					x.Key,
+					AliasedKey = aliasMap.TryGetValue(x.Key, out var key) ? key : "",
+					x.TargetType,
+					ImplicitStyle = implicitStyles.Contains(x.Key) ? "true" : "",
 				})
-				.Dump("ToolkitV2Styles", 0);
+				.Dump("=== Style Exports ===", 0)
+				.ToCopyableMarkdownTable()
+				.Dump();
 		}
 
 		[Obsolete]
@@ -415,7 +506,7 @@ public class Script
 			void Add(string key, string? alias = null, bool isImplicit = false) =>
 				result.Add((key, alias ?? key.Substring(StylePrefix.Length), isImplicit));
 		}
-
+		[Obsolete]
 		private static IEnumerable<(string ResourceKey, string SharedKey, bool IsDefaultStyle)> ParseGetStyleInfos(string path)
 		{
 			var source = File.ReadAllText(path);
@@ -463,6 +554,12 @@ public class Script
 				.ToArray()
 				.Dump("StaticResources", 0);
 
+			Regex.Matches(document.ToString(), @"\{StaticResource (\w+)\}").Cast<Match>()
+				.Select(x => x.Groups[1].Value)
+				.Where(x => themeResources.Select(x => x.Key).Contains(x))
+				.GroupBy(x => x, (k, g) => $"{k} x{g.Count()}")
+				.Dump();
+
 			if (themeResources.Count(x => !x.Parity) is { } count && count != 0)
 				Util.WithStyle($"{count} of the {themeResources.Length} theme-resources are in disparity", $"color: red").Dump();
 			else
@@ -491,7 +588,7 @@ public class Script
 				.Dump();
 			var markdown = table.ToMarkdownTable();
 			Clickable.CopyText("Copy as markdown table", markdown).Dump();
-			
+
 			return markdown;
 
 			(string Type, object Value) GetResource(object value)
@@ -557,15 +654,204 @@ public class Script
 				_ => value?.ToString(),
 			};
 		}
+
+		public static void DiffThemeV2InnerResources()
+		{
+			// 26ResKey, 30ResKey, Type, Value: Value or 26Val->30Val
+			//DiffResources(@"D:\code\temp\diff_projects\themes@2.6\Styles\Controls\v2", @"D:\code\temp\diff_projects\themes@3.0\Styles\Controls\v2", "Button.xaml");
+			//DiffResources(@"D:\code\temp\diff_projects\themes@2.6\Styles\Controls\v2", @"D:\code\temp\diff_projects\themes@3.0\Styles\Controls\v2", "CalendarDatePicker.xaml");
+			//DiffResources(@"D:\code\temp\diff_projects\themes@2.6\Styles\Controls\v2", @"D:\code\temp\diff_projects\themes@3.0\Styles\Controls\v2", "CalendarView.xaml");
+			//DiffResources(@"D:\code\temp\diff_projects\themes@2.6\Styles\Controls\v2", @"D:\code\temp\diff_projects\themes@3.0\Styles\Controls\v2", "CheckBox.xaml");
+			//DiffResources(@"D:\code\temp\diff_projects\themes@2.6\Styles\Controls\v2", @"D:\code\temp\diff_projects\themes@3.0\Styles\Controls\v2", "ComboBox.xaml");
+			//DiffResources(@"D:\code\temp\diff_projects\themes@2.6\Styles\Controls\v2", @"D:\code\temp\diff_projects\themes@3.0\Styles\Controls\v2", "CommandBar.xaml");
+			//DiffResources(@"D:\code\temp\diff_projects\themes@2.6\Styles\Controls\v2", @"D:\code\temp\diff_projects\themes@3.0\Styles\Controls\v2", "ContentDialog.xaml");
+			DiffResources(@"D:\code\temp\diff_projects\themes@2.6\Styles\Controls\v2", @"D:\code\temp\diff_projects\themes@3.0\Styles\Controls\v2", "DatePicker.xaml");
+			//DiffResources(@"D:\code\temp\diff_projects\themes@2.6\Styles\Controls\v2", @"D:\code\temp\diff_projects\themes@3.0\Styles\Controls\v2", "FloatingActionButton.xaml");
+			//DiffResources(@"D:\code\temp\diff_projects\themes@2.6\Styles\Controls\v2", @"D:\code\temp\diff_projects\themes@3.0\Styles\Controls\v2", "Flyout.xaml");
+			//DiffResources(@"D:\code\temp\diff_projects\themes@2.6\Styles\Controls\v2", @"D:\code\temp\diff_projects\themes@3.0\Styles\Controls\v2", "HyperlinkButton.xaml");
+			//DiffResources(@"D:\code\temp\diff_projects\themes@2.6\Styles\Controls\v2", @"D:\code\temp\diff_projects\themes@3.0\Styles\Controls\v2", "ListView.xaml");
+			//DiffResources(@"D:\code\temp\diff_projects\themes@2.6\Styles\Controls\v2", @"D:\code\temp\diff_projects\themes@3.0\Styles\Controls\v2", "NavigationView.xaml");
+			//DiffResources(@"D:\code\temp\diff_projects\themes@2.6\Styles\Controls\v2", @"D:\code\temp\diff_projects\themes@3.0\Styles\Controls\v2", "PasswordBox.xaml");
+			//DiffResources(@"D:\code\temp\diff_projects\themes@2.6\Styles\Controls\v2", @"D:\code\temp\diff_projects\themes@3.0\Styles\Controls\v2", "PipsPager.xaml", "PipsPager.UWP.xaml", "PipsPager.Base.xaml");
+			//DiffResources(@"D:\code\temp\diff_projects\themes@2.6\Styles\Controls\v2", @"D:\code\temp\diff_projects\themes@3.0\Styles\Controls\v2", "ProgressBar.xaml");
+			//DiffResources(@"D:\code\temp\diff_projects\themes@2.6\Styles\Controls\v2", @"D:\code\temp\diff_projects\themes@3.0\Styles\Controls\v2", "ProgressRing.xaml", "ProgressRingWinUI.xaml");
+			//DiffResources(@"D:\code\temp\diff_projects\themes@2.6\Styles\Controls\v2", @"D:\code\temp\diff_projects\themes@3.0\Styles\Controls\v2", "RadioButton.xaml");
+			//DiffResources(@"D:\code\temp\diff_projects\themes@2.6\Styles\Controls\v2", @"D:\code\temp\diff_projects\themes@3.0\Styles\Controls\v2", "Ripple.xaml");
+			//DiffResources(@"D:\code\temp\diff_projects\themes@2.6\Styles\Controls\v2", @"D:\code\temp\diff_projects\themes@3.0\Styles\Controls\v2", "Slider.xaml");
+			//DiffResources(@"D:\code\temp\diff_projects\themes@2.6\Styles\Controls\v2", @"D:\code\temp\diff_projects\themes@3.0\Styles\Controls\v2", "TextBlock.xaml");
+			//DiffResources(@"D:\code\temp\diff_projects\themes@2.6\Styles\Controls\v2", @"D:\code\temp\diff_projects\themes@3.0\Styles\Controls\v2", "TextBox.xaml");
+			//DiffResources(@"D:\code\temp\diff_projects\themes@2.6\Styles\Controls\v2", @"D:\code\temp\diff_projects\themes@3.0\Styles\Controls\v2", "ToggleButton.xaml");
+			//DiffResources(@"D:\code\temp\diff_projects\themes@2.6\Styles\Controls\v2", @"D:\code\temp\diff_projects\themes@3.0\Styles\Controls\v2", "ToggleSwitch.xaml");
+			//ExtractInnerResources((ResourceDictionary)ScuffedXamlParser.Load(@"D:\code\temp\diff_projects\themes@2.6\Styles\Controls\v2\CalendarDatePicker.xaml")).Dump();
+			//ExtractInnerResources(@"D:\code\temp\diff_projects\themes@3.0\Styles\Controls\v2\ProgressRing.xaml").Dump();
+
+			(string Key, bool Themed, string Value)[] ExtractInnerResources(ResourceDictionary rd)
+			{
+				return rd
+					.OrderByDescending(x => x.Value is ThemeResource)
+					.Select(x => ((string Key, bool Themed, string Value))(
+						x.Key.ToString(),
+						x.Value is ThemeResource,
+						x.Value switch
+						{
+							StaticResource sr => FormatValue(sr.Value),
+							ThemeResource tr => tr.AreThemeDefinitionEqual()
+								? FormatValue(tr.LightValue)
+								: throw new Exception($"Polarized resource: key={x.Key}"),
+							_ => throw new ArgumentOutOfRangeException($"Invalid resource dictionary value type: {x.Value.GetType().Name} (key={x.Key})"),
+						}
+					))
+					.ToArray();
+			}
+			void DiffResources(string oldBase, string newBase, params string[] files)
+			{
+				var oldResources = ExtractInnerResources(GetResources(oldBase, files));
+				var newResources = ExtractInnerResources(GetResources(newBase, files));
+				var keys = oldResources.Concat(newResources).Select(x => x.Key).ToList();
+
+				var table = Pair(oldResources, newResources, x => x.Key)
+					.OrderByDescending(x => x.Old?.Themed ?? x.New?.Themed)
+					.ThenBy(x => keys.IndexOf(x.Old?.Key ?? x.New?.Key))
+					.Select(x => new
+					{
+						OldKey = x.Old?.Key ?? "- NEWLY ADDED -",
+						NewKey = x.New?.Key ?? "- REMOVED -",
+						Themed = CompareValue(x.Old?.Themed.ToString(), x.New?.Themed.ToString()),
+						Value = CompareValue(x.Old?.Value, x.New?.Value),
+					})
+					.Dump(Path.GetFileNameWithoutExtension(files.First()))
+					.Where(x => x.OldKey != "- NEWLY ADDED -")
+					.ToCopyableMarkdownTable().Dump()
+					;
+
+				//$"# {Path.GetFileNameWithoutExtension(files[0])}".Dump();
+				//table.ToMarkdownTable().Dump();
+					
+				ResourceDictionary GetResources(string basePath, string[] files)
+				{
+					return files.Select(x => Path.Combine(basePath, x))
+						.Where(x => File.Exists(x))
+						.Aggregate(new ResourceDictionary(), (acc, x) => acc.Merge((ResourceDictionary)ScuffedXamlParser.Load(x)));
+				}
+				IEnumerable<(T? Old, T? New)> Pair<T>(IEnumerable<T> oldSource, IEnumerable<T> newSource, Func<T, string> keySelector) where T : struct
+				{
+					var oldMap = oldSource.ToDictionary(keySelector);
+					var newMap = newSource.ToDictionary(keySelector);
+					
+					foreach (var (o, n) in oldMap.Join(newMap, o => o.Key, n => n.Key, Tuple.Create).ToArray()) // MIDDLE
+					{
+						oldMap.Remove(o.Key);
+						newMap.Remove(n.Key);
+
+						yield return (o.Value, n.Value);
+					}
+					
+					var knownPairs = new List<(string OldKey, string NewKey)>()
+					{
+						("MaterialComboBoxItemSelectedBackgroundThemeBrush", "ComboBoxItemBackgroundSelected"),
+						("MaterialComboBoxArrowForegroundThemeBrush", "ComboBoxArrowForeground"),
+						("MaterialComboBoxPlaceholderFocusedThemeBrush", "ComboBoxUpperPlaceHolderForeground"),
+						("MaterialComboBoxPlaceholderForegroundThemeBrush", "ComboBoxPlaceHolderForeground"),
+						("MaterialDateTimeFlyoutBorderThickness", "DatePickerFlyoutBorderThickness"),
+						("MaterialDatePickerFlyoutPresenterBackgroundBrush", "DatePickerFlyoutPresenterBackground"),
+						("MaterialDatePickerBackgroundColorBrush", "DatePickerButtonBackground"),
+						("_____", "_____"),
+						("_____", "_____"),
+						("_____", "_____"),
+						("_____", "_____"),
+						("_____", "_____"),
+					};
+					foreach (var knownPair in knownPairs) // MIDDLE'
+					{
+						if (oldMap.TryGetValue(knownPair.OldKey, out var oldValue) && newMap.TryGetValue(knownPair.NewKey, out var newValue))
+						{
+							oldMap.Remove(knownPair.OldKey);
+							newMap.Remove(knownPair.NewKey);
+
+							yield return (oldValue, newValue);
+						}
+					}
+					
+					var mutationsT1 = new List<(Func<string, string> OldKeyMutator, Func<string, string> NewKeyMutator)>
+					{
+						(o => o.Replace("PathData", "Data"), n => n),
+						(o => o.RegexReplace("GlyphPathStyle", "GlyphPathData"), n => n),
+						(o => Path.GetFileNameWithoutExtension(files[0]) + o, n => n),
+						(o => Path.GetFileNameWithoutExtension(files[0]) + o.RegexReplace("^(M3)?Material", ""), n => n),
+						(o => o.RegexReplace("BackgroundBrush$", "Brush"), n => n),
+						(o => o.RegexReplace("(Theme|Color)Brush$", ""), n => n),
+						(o => o.RegexReplace("(Theme|Color)Brush$", "Brush"), n => n),
+						(o => o.RegexReplace("(Theme|Color)Brush$", "").RegexReplace("(Selected)?(PointerOver|Pressed|Focused|Unfocused|Disabled)(.+)$", "$3$1$2"), n => n),
+						(o => o.RegexReplace("(Theme|Color)Brush$", "").RegexReplace("(Selected)?(PointerOver|Pressed|Focused|Unfocused|Disabled)(.+)$", "$3$1$2"), n => n.Replace("Background", "")),
+					};
+					var mutationsT2 = new List<(Func<string, string> OldKeyMutator, Func<string, string> NewKeyMutator)>
+					{
+						(o => o, n => n),
+						(o => o.RegexReplace("^(M3)?Material", ""), n => n),
+						(o => o.Replace(Path.GetFileNameWithoutExtension(files[0]), ""), n => n.Replace(Path.GetFileNameWithoutExtension(files[0]), "")),
+						(o => o.Replace("SurfaceFab", "FabSurface"), n => n),
+						(o => o.Replace("SecondaryFab", "FabSecondary"), n => n),
+						(o => o.Replace("TertiaryFab", "FabTertiary"), n => n),
+					};
+					foreach (var t2 in mutationsT2)
+					foreach (var t1 in mutationsT1)
+					{
+						(Func<string, string> OldKeyMutator, Func<string, string> NewKeyMutator) mutation = (
+							OldKeyMutator: (string x) => t1.OldKeyMutator(t2.OldKeyMutator(x)), 
+							NewKeyMutator: (string x) => t1.NewKeyMutator(t2.NewKeyMutator(x)));
+						foreach (var (o, n) in oldMap.Join(newMap, o => mutation.OldKeyMutator(o.Key), n => mutation.NewKeyMutator(n.Key), Tuple.Create).ToArray()) // MIDDLE'
+						{
+							oldMap.Remove(o.Key);
+							newMap.Remove(n.Key);
+
+							yield return (o.Value, n.Value);
+						}
+					}
+					foreach (var o in oldMap) // LEFT
+					{
+						yield return (o.Value, default);
+					}
+					// we dont care above new values for migration reference
+					//foreach (var n in newMap) // RIGHT
+					//{
+					//	yield return (default, n.Value);
+					//}
+				}
+			}
+
+			string FormatValue(object value)
+			{
+				return value switch
+				{
+					StaticResourceRef srr => srr.Key,
+					Style style => $"Style@{style.TargetType}",
+					GenericValueObject gvo when gvo.Typename == "LottieVisualSource" => gvo.Value,
+					GenericValueObject gvo when gvo.Typename == "GridLength" => gvo.Value,
+					GenericValueObject gvo when gvo.Typename == "ControlTemplate" => null,
+
+					_ => value?.ToString(),
+				};
+			}
+			string CompareValue(string o, string n)
+			{
+				if (o == null) return n;
+				if (n == null) return o;
+				if (o == n) return o;
+
+				return o.Length + n.Length > 100
+					? string.Join("\n", o, "->", n)
+					: string.Join(" ", o, "->", n);
+			}
+		}
 	}
 }
 
 public record DependencyObject
 {
-	private Dictionary<string, string> _properties = new();
+	private Dictionary<string, object> _properties = new();
 
-	public string GetDP(string dp) => _properties.TryGetValue(dp, out var value) ? value : default;
-	public void SetDP(string dp, string value) => _properties[dp] = value;
+	public object GetDP(string dp) => _properties.TryGetValue(dp, out var value) ? value : default;
+	public void SetDP(string dp, object value) => _properties[dp] = value;
 }
 public record Thickness(double Left, double Top, double Right, double Bottom)
 {
@@ -590,7 +876,27 @@ public record Color(byte A, byte R, byte G, byte B)
 {
 	public override string ToString() => "#" + this.ToRgbText();
 }
-public record SolidColorBrush(Color Color = default, double Alpha = double.NaN) : DependencyObject;
+public record SolidColorBrush(Color Color = default, double Opacity = 1) : DependencyObject
+{
+	public override string ToString()
+	{
+		var color = GetDP(nameof(Color)) switch
+		{
+			IResourceRef rf => rf.Key,
+			null => Color.ToString(),
+			_ => throw new ArgumentOutOfRangeException(),
+		};
+		var opacity = GetDP(nameof(Opacity)) switch
+		{
+			IResourceRef rf => $"*{rf.Key}",
+			null when Opacity != 1 => $"*{Opacity}",
+			null => "",
+			_ => throw new ArgumentOutOfRangeException(),
+		};
+
+		return $"{color}{opacity}";
+	}
+}
 public record Style(string Key = null, string TargetType = null, string BasedOn = null)
 {
 	public List<Setter> Setters = new();
@@ -634,9 +940,7 @@ public record Style(string Key = null, string TargetType = null, string BasedOn 
 		return result;
 	}
 }
-public record Setter(string Property, string Value)
-{
-}
+public record Setter(string Property, string Value);
 
 public record GenericValueObject(string Typename, string Value);
 
@@ -645,7 +949,7 @@ public record ResourceKey(string Key, string TargetType = null) : IComparable
 	public static implicit operator ResourceKey(string key) => new(key);
 
 	private object ToDump() => ToString();
-	public override string ToString() => Key.ToString();
+	public override string ToString() => Key?.ToString() ?? $"TargetType={TargetType}";
 
 	public int CompareTo(object obj)
 	{
@@ -673,25 +977,54 @@ public interface IKeyedResource
 	{
 		if (markup is null) return null;
 
-		return Regex.Match(markup, @"^{(Static|Theme|Dynamic)Resource (?<key>\w+)}$") is { Success: true } match
-			? match.Groups["key"].Value
+		return TryGetKeyFromMarkup(markup, out var key)
+			? key
 			: throw new ArgumentException("Invalid resource markup: " + markup);
 	}
+	public static bool TryGetKeyFromMarkup(string maybeMarkup, out string key)
+	{
+		if (maybeMarkup is not null && Regex.Match(maybeMarkup, @"^{(?<type>(Static|Theme|Dynamic)Resource) (?<key>\w+)}$") is { Success: true } match)
+		{
+			key = match.Groups["key"].Value;
+			return true;
+		}
+		else
+		{
+			key = default;
+			return false;
+		}
+	}
+	public static IResourceRef TryParseResource(string maybeMarkup)
+	{
+		if (maybeMarkup is not null && Regex.Match(maybeMarkup, @"^{(?<type>(Static|Theme|Dynamic)Resource) (?<key>\w+)}$") is { Success: true, Groups: var g })
+		{
+			return g["type"].Value switch
+			{
+				"StaticResource" => new StaticResourceRef(g["key"].Value),
+				"ThemeResource" => new ThemeResourceRef(g["key"].Value),
+				"DynamicResource" => throw new NotImplementedException("DynamicResource"),
+				
+				_ => throw new ArgumentOutOfRangeException($"Invalid resource markup: {g["type"].Value}"),
+			};
+		}
+		
+		return default;
+	}
+}
+public interface IResourceRef
+{
+	string Key { get; }
 }
 public record StaticResource(ResourceKey Key, object Value) : IKeyedResource;
 public record ThemeResource(ResourceKey Key, object LightValue, object DarkValue) : IKeyedResource // naive impl only, it should be a dict<TKey, object>
 {
 	public bool AreThemeDefinitionEqual()
 	{
-		if (LightValue is string lstr && DarkValue is string dstr)
-		{
-			return lstr == dstr;
-		}
-
-		throw new NotImplementedException();
+		return LightValue.Equals(DarkValue);
 	}
 }
-public record StaticResourceRef(string Key);
+public record StaticResourceRef(string Key) : IResourceRef;
+public record ThemeResourceRef(string Key) : IResourceRef;
 
 public static class Global
 {
@@ -751,6 +1084,21 @@ public class ResourceDictionary : Dictionary<ResourceKey, IKeyedResource>
 			element.Attribute(X + "Key")?.Value ??
 			element.Attribute(X + "Name")?.Value;
 	}
+	private static ResourceKey GetResourceKey(XElement element)
+	{
+		if (GetKey(element) is string key)
+		{
+			return key;
+		}
+		if (element.Attribute("TargetType")?.Value is { } targetType)
+		{
+			return new(null, targetType);
+		}
+
+		element.Dump();
+		throw new KeyNotFoundException();
+	}
+
 	public static ResourceDictionary Parse(XElement e)
 	{
 		var result = new ResourceDictionary();
@@ -761,20 +1109,20 @@ public class ResourceDictionary : Dictionary<ResourceKey, IKeyedResource>
 				_ = property switch
 				{
 					"ThemeDictionaries" => ParseThemeDictionaries(result, child),
-					"MergedDictionaries" => null,
+					"MergedDictionaries" => ParseMergedDictionaries(result, child),
 
 					_ => throw new NotImplementedException(property),
 				};
 			}
 			else
 			{
-				result.Add(new StaticResource(ResourceDictionary.GetKey(child), ScuffedXamlParser.Parse(child)));
+				result.Add(new StaticResource(ResourceDictionary.GetResourceKey(child), ScuffedXamlParser.Parse(child)));
 			}
 		}
 
 		return result;
 	}
-	protected static ResourceDictionary ParseThemeDictionaries(ResourceDictionary rd, XElement e)
+	protected static ResourceDictionary[] ParseThemeDictionaries(ResourceDictionary rd, XElement e)
 	{
 		var themes = Parse(e);
 		var light = (ResourceDictionary)((StaticResource)themes.FirstOrDefault(x => ThemeMapping["Dark"].Split(',').Contains(x.Key.Key)).Value).Value;
@@ -784,7 +1132,18 @@ public class ResourceDictionary : Dictionary<ResourceKey, IKeyedResource>
 		foreach (var key in Enumerable.Union(light.Keys, dark.Keys))
 			rd.Add(new ThemeResource(key, GetResourceUnwrapped(light, key), GetResourceUnwrapped(dark, key)));
 
-		return rd;
+		return new[] { light, dark };
+	}
+	protected static ResourceDictionary[] ParseMergedDictionaries(ResourceDictionary rd, XElement e)
+	{
+		var buffer = new List<ResourceDictionary>();
+		foreach (var item in e.Elements())
+		{
+			var nested = Parse(item);
+			rd.Merge(nested);
+		}
+
+		return buffer.ToArray();
 	}
 }
 public static class ScuffedXamlParser
@@ -894,19 +1253,19 @@ public static class ScuffedXamlParser
 				_ => throw new ArgumentException("Invalid color literal: " + raw),
 			};
 		}
-		
+
 		return raw switch
 		{
 			"Transparent" => new Color(0, 255, 255, 255),
-			
+
 			_ => throw new ArgumentException("Invalid color literal: " + raw),
 		};
 	}
 	public static SolidColorBrush ParseSolidColorBrush(XElement e)
 	{
 		var result = new SolidColorBrush();
-		result.MapDP(e, "Opacity");
-		result.MapDP(e, "Color");
+		if (result.MapDP(e, x => x.Color, out var color)) result = result with { Color = ParseColor(color) };
+		if (result.MapDP(e, x => x.Opacity, out var opacity)) result = result with { Opacity = double.Parse(opacity) };
 
 		return result;
 	}
@@ -917,12 +1276,31 @@ public static class ScuffedXamlParser
 	private static object ParseStaticResource(XElement e)
 	{
 		return new StaticResourceRef(e.Attribute("ResourceKey")?.Value);
-		return $"ResourceKey={e.Attribute("ResourceKey")?.Value}";
 	}
-
-	private static void MapDP(this DependencyObject obj, XElement e, string dp)
+	
+	private static bool MapDP<T,TProperty>(this T obj, XElement e, Expression<Func<T, TProperty>> memberSelector, out string value) where T : DependencyObject
 	{
-		if (e.Attribute(dp) is { } value) obj.SetDP(dp, value.Value);
+		var property = memberSelector.Body switch
+		{
+			MemberExpression m => m.Member.Name,
+		
+			_ => throw new ArgumentOutOfRangeException(memberSelector.Body.Type.ToString()),
+		};
+		if (e.Attribute(property) is { } attribute)
+		{
+			if (IKeyedResource.TryParseResource(attribute.Value) is { } resRef)
+			{
+				obj.SetDP(property, resRef);
+			}
+			else
+			{
+				value = attribute.Value;
+				return true;
+			}
+		}
+		
+		value = default;
+		return false;
 	}
 }
 
@@ -1057,6 +1435,7 @@ public static class MarkdownHelper
 
 		return buffer.ToString();
 	}
+	public static Hyperlinq ToCopyableMarkdownTable<T>(this IEnumerable<T> source, string header = "Copy as md table") => Clickable.CopyText(header, source.ToMarkdownTable());
 }
 public static class KeyedResourceExtensions
 {
