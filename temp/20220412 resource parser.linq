@@ -1,15 +1,3 @@
-<Query Kind="Program">
-  <NuGetReference>Microsoft.CodeAnalysis.CSharp</NuGetReference>
-  <NuGetReference>TextCopy</NuGetReference>
-  <Namespace>Microsoft.CodeAnalysis</Namespace>
-  <Namespace>Microsoft.CodeAnalysis.CSharp</Namespace>
-  <Namespace>Microsoft.CodeAnalysis.CSharp.Syntax</Namespace>
-  <Namespace>static UserQuery.Global</Namespace>
-  <Namespace>System.Dynamic</Namespace>
-  <Namespace>System.Globalization</Namespace>
-  <Namespace>TextCopy</Namespace>
-</Query>
-
 //#define THROW_ON_NOTIMPLEMENTED_OBJECT
 #define ENABLE_GENERIC_VALUE_OBJECT_PARSING
 #define REPLACE_UNO_PLATFORM_XMLNS
@@ -658,40 +646,49 @@ public class Script
 		public static void DiffThemeV2InnerResources()
 		{
 			// 26ResKey, 30ResKey, Type, Value: Value or 26Val->30Val
-			//DiffResources(@"D:\code\temp\diff_projects\themes@2.6\Styles\Controls\v2", @"D:\code\temp\diff_projects\themes@3.0\Styles\Controls\v2", "Button.xaml");
-			//DiffResources(@"D:\code\temp\diff_projects\themes@2.6\Styles\Controls\v2", @"D:\code\temp\diff_projects\themes@3.0\Styles\Controls\v2", "CalendarDatePicker.xaml");
-			//DiffResources(@"D:\code\temp\diff_projects\themes@2.6\Styles\Controls\v2", @"D:\code\temp\diff_projects\themes@3.0\Styles\Controls\v2", "CalendarView.xaml");
-			//DiffResources(@"D:\code\temp\diff_projects\themes@2.6\Styles\Controls\v2", @"D:\code\temp\diff_projects\themes@3.0\Styles\Controls\v2", "CheckBox.xaml");
-			//DiffResources(@"D:\code\temp\diff_projects\themes@2.6\Styles\Controls\v2", @"D:\code\temp\diff_projects\themes@3.0\Styles\Controls\v2", "ComboBox.xaml");
-			//DiffResources(@"D:\code\temp\diff_projects\themes@2.6\Styles\Controls\v2", @"D:\code\temp\diff_projects\themes@3.0\Styles\Controls\v2", "CommandBar.xaml");
-			//DiffResources(@"D:\code\temp\diff_projects\themes@2.6\Styles\Controls\v2", @"D:\code\temp\diff_projects\themes@3.0\Styles\Controls\v2", "ContentDialog.xaml");
-			DiffResources(@"D:\code\temp\diff_projects\themes@2.6\Styles\Controls\v2", @"D:\code\temp\diff_projects\themes@3.0\Styles\Controls\v2", "DatePicker.xaml");
-			//DiffResources(@"D:\code\temp\diff_projects\themes@2.6\Styles\Controls\v2", @"D:\code\temp\diff_projects\themes@3.0\Styles\Controls\v2", "FloatingActionButton.xaml");
-			//DiffResources(@"D:\code\temp\diff_projects\themes@2.6\Styles\Controls\v2", @"D:\code\temp\diff_projects\themes@3.0\Styles\Controls\v2", "Flyout.xaml");
-			//DiffResources(@"D:\code\temp\diff_projects\themes@2.6\Styles\Controls\v2", @"D:\code\temp\diff_projects\themes@3.0\Styles\Controls\v2", "HyperlinkButton.xaml");
-			//DiffResources(@"D:\code\temp\diff_projects\themes@2.6\Styles\Controls\v2", @"D:\code\temp\diff_projects\themes@3.0\Styles\Controls\v2", "ListView.xaml");
-			//DiffResources(@"D:\code\temp\diff_projects\themes@2.6\Styles\Controls\v2", @"D:\code\temp\diff_projects\themes@3.0\Styles\Controls\v2", "NavigationView.xaml");
-			//DiffResources(@"D:\code\temp\diff_projects\themes@2.6\Styles\Controls\v2", @"D:\code\temp\diff_projects\themes@3.0\Styles\Controls\v2", "PasswordBox.xaml");
-			//DiffResources(@"D:\code\temp\diff_projects\themes@2.6\Styles\Controls\v2", @"D:\code\temp\diff_projects\themes@3.0\Styles\Controls\v2", "PipsPager.xaml", "PipsPager.UWP.xaml", "PipsPager.Base.xaml");
-			//DiffResources(@"D:\code\temp\diff_projects\themes@2.6\Styles\Controls\v2", @"D:\code\temp\diff_projects\themes@3.0\Styles\Controls\v2", "ProgressBar.xaml");
-			//DiffResources(@"D:\code\temp\diff_projects\themes@2.6\Styles\Controls\v2", @"D:\code\temp\diff_projects\themes@3.0\Styles\Controls\v2", "ProgressRing.xaml", "ProgressRingWinUI.xaml");
-			//DiffResources(@"D:\code\temp\diff_projects\themes@2.6\Styles\Controls\v2", @"D:\code\temp\diff_projects\themes@3.0\Styles\Controls\v2", "RadioButton.xaml");
-			//DiffResources(@"D:\code\temp\diff_projects\themes@2.6\Styles\Controls\v2", @"D:\code\temp\diff_projects\themes@3.0\Styles\Controls\v2", "Ripple.xaml");
-			//DiffResources(@"D:\code\temp\diff_projects\themes@2.6\Styles\Controls\v2", @"D:\code\temp\diff_projects\themes@3.0\Styles\Controls\v2", "Slider.xaml");
-			//DiffResources(@"D:\code\temp\diff_projects\themes@2.6\Styles\Controls\v2", @"D:\code\temp\diff_projects\themes@3.0\Styles\Controls\v2", "TextBlock.xaml");
-			//DiffResources(@"D:\code\temp\diff_projects\themes@2.6\Styles\Controls\v2", @"D:\code\temp\diff_projects\themes@3.0\Styles\Controls\v2", "TextBox.xaml");
-			//DiffResources(@"D:\code\temp\diff_projects\themes@2.6\Styles\Controls\v2", @"D:\code\temp\diff_projects\themes@3.0\Styles\Controls\v2", "ToggleButton.xaml");
-			//DiffResources(@"D:\code\temp\diff_projects\themes@2.6\Styles\Controls\v2", @"D:\code\temp\diff_projects\themes@3.0\Styles\Controls\v2", "ToggleSwitch.xaml");
-			//ExtractInnerResources((ResourceDictionary)ScuffedXamlParser.Load(@"D:\code\temp\diff_projects\themes@2.6\Styles\Controls\v2\CalendarDatePicker.xaml")).Dump();
-			//ExtractInnerResources(@"D:\code\temp\diff_projects\themes@3.0\Styles\Controls\v2\ProgressRing.xaml").Dump();
-
-			(string Key, bool Themed, string Value)[] ExtractInnerResources(ResourceDictionary rd)
+			var sb = new StringBuilder();
+			sb.AppendLine(DiffResources(@"X:\src\old\uno.toolkit.ui\src\library\Uno.Toolkit.Material\Styles\Controls\v2", @"X:\src\uno.toolkit.ui\src\library\Uno.Toolkit.Material\Styles\Controls\v2", "Chip.xaml"));
+			//sb.AppendLine(DiffResources(@"X:\src\old\uno.toolkit.ui\src\library\Uno.Toolkit.Material\Styles\Controls\v2", @"X:\src\uno.toolkit.ui\src\library\Uno.Toolkit.Material\Styles\Controls\v2", "CardContentControl.xaml"));
+			//sb.AppendLine(DiffResources(@"X:\src\old\uno.toolkit.ui\src\library\Uno.Toolkit.Material\Styles\Controls\v2", @"X:\src\uno.toolkit.ui\src\library\Uno.Toolkit.Material\Styles\Controls\v2", "Chip.xaml"));
+			//sb.AppendLine(DiffResources(@"X:\src\old\uno.toolkit.ui\src\library\Uno.Toolkit.Material\Styles\Controls\v2", @"X:\src\uno.toolkit.ui\src\library\Uno.Toolkit.Material\Styles\Controls\v2", "ChipGroup.xaml"));
+			//sb.AppendLine(DiffResources(@"X:\src\old\uno.toolkit.ui\src\library\Uno.Toolkit.Material\Styles\Controls\v2", @"X:\src\uno.toolkit.ui\src\library\Uno.Toolkit.Material\Styles\Controls\v2", "Divider.xaml"));
+			//sb.AppendLine(DiffResources(@"X:\src\old\uno.toolkit.ui\src\library\Uno.Toolkit.Material\Styles\Controls\v2", @"X:\src\uno.toolkit.ui\src\library\Uno.Toolkit.Material\Styles\Controls\v2", "NavigationBar.xaml"));
+			//sb.AppendLine(DiffResources(@"X:\src\old\uno.toolkit.ui\src\library\Uno.Toolkit.Material\Styles\Controls\v2", @"X:\src\uno.toolkit.ui\src\library\Uno.Toolkit.Material\Styles\Controls\v2", "TabBar.xaml"));
+			//sb.AppendLine(DiffResources(@"X:\src\old\Uno.Themes\src\library\Uno.Material\Styles\Controls\v2", @"X:\src\Uno.Themes\src\library\Uno.Material\Styles\Controls\v2", "CalendarDatePicker.xaml"));
+			//sb.AppendLine(DiffResources(@"X:\src\old\Uno.Themes\src\library\Uno.Material\Styles\Controls\v2", @"X:\src\Uno.Themes\src\library\Uno.Material\Styles\Controls\v2", "CalendarView.xaml"));
+			//sb.AppendLine(DiffResources(@"X:\src\old\Uno.Themes\src\library\Uno.Material\Styles\Controls\v2", @"X:\src\Uno.Themes\src\library\Uno.Material\Styles\Controls\v2", "CheckBox.xaml"));
+			//sb.AppendLine(DiffResources(@"X:\src\old\Uno.Themes\src\library\Uno.Material\Styles\Controls\v2", @"X:\src\Uno.Themes\src\library\Uno.Material\Styles\Controls\v2", "ComboBox.xaml"));
+			//sb.AppendLine(DiffResources(@"X:\src\old\Uno.Themes\src\library\Uno.Material\Styles\Controls\v2", @"X:\src\Uno.Themes\src\library\Uno.Material\Styles\Controls\v2", "CommandBar.xaml"));
+			//sb.AppendLine(DiffResources(@"X:\src\old\Uno.Themes\src\library\Uno.Material\Styles\Controls\v2", @"X:\src\Uno.Themes\src\library\Uno.Material\Styles\Controls\v2", "ContentDialog.xaml"));
+			//sb.AppendLine(DiffResources(@"X:\src\old\Uno.Themes\src\library\Uno.Material\Styles\Controls\v2", @"X:\src\Uno.Themes\src\library\Uno.Material\Styles\Controls\v2", "DatePicker.xaml"));
+			//sb.AppendLine(DiffResources(@"X:\src\old\Uno.Themes\src\library\Uno.Material\Styles\Controls\v2", @"X:\src\Uno.Themes\src\library\Uno.Material\Styles\Controls\v2", "FloatingActionButton.xaml"));
+			//sb.AppendLine(DiffResources(@"X:\src\old\Uno.Themes\src\library\Uno.Material\Styles\Controls\v2", @"X:\src\Uno.Themes\src\library\Uno.Material\Styles\Controls\v2", "Flyout.xaml"));
+			//sb.AppendLine(DiffResources(@"X:\src\old\Uno.Themes\src\library\Uno.Material\Styles\Controls\v2", @"X:\src\Uno.Themes\src\library\Uno.Material\Styles\Controls\v2", "HyperlinkButton.xaml"));
+			//sb.AppendLine(DiffResources(@"X:\src\old\Uno.Themes\src\library\Uno.Material\Styles\Controls\v2", @"X:\src\Uno.Themes\src\library\Uno.Material\Styles\Controls\v2", "ListView.xaml"));
+			//sb.AppendLine(DiffResources(@"X:\src\old\Uno.Themes\src\library\Uno.Material\Styles\Controls\v2", @"X:\src\Uno.Themes\src\library\Uno.Material\Styles\Controls\v2", "NavigationView.xaml"));
+			//sb.AppendLine(DiffResources(@"X:\src\old\Uno.Themes\src\library\Uno.Material\Styles\Controls\v2", @"X:\src\Uno.Themes\src\library\Uno.Material\Styles\Controls\v2", "PasswordBox.xaml"));
+			//sb.AppendLine(DiffResources(@"X:\src\old\Uno.Themes\src\library\Uno.Material\Styles\Controls\v2", @"X:\src\Uno.Themes\src\library\Uno.Material\Styles\Controls\v2", "PipsPager.xaml", "PipsPager.UWP.xaml", "PipsPager.Base.xaml"));
+			//sb.AppendLine(DiffResources(@"X:\src\old\Uno.Themes\src\library\Uno.Material\Styles\Controls\v2", @"X:\src\Uno.Themes\src\library\Uno.Material\Styles\Controls\v2", "ProgressBar.xaml"));
+			//sb.AppendLine(DiffResources(@"X:\src\old\Uno.Themes\src\library\Uno.Material\Styles\Controls\v2", @"X:\src\Uno.Themes\src\library\Uno.Material\Styles\Controls\v2", "ProgressRing.xaml", "ProgressRingWinUI.xaml"));
+			//sb.AppendLine(DiffResources(@"X:\src\old\Uno.Themes\src\library\Uno.Material\Styles\Controls\v2", @"X:\src\Uno.Themes\src\library\Uno.Material\Styles\Controls\v2", "RadioButton.xaml"));
+			//sb.AppendLine(DiffResources(@"X:\src\old\Uno.Themes\src\library\Uno.Material\Styles\Controls\v2", @"X:\src\Uno.Themes\src\library\Uno.Material\Styles\Controls\v2", "Ripple.xaml"));
+			//sb.AppendLine(DiffResources(@"X:\src\old\Uno.Themes\src\library\Uno.Material\Styles\Controls\v2", @"X:\src\Uno.Themes\src\library\Uno.Material\Styles\Controls\v2", "Slider.xaml"));
+			//sb.AppendLine(DiffResources(@"X:\src\old\Uno.Themes\src\library\Uno.Material\Styles\Controls\v2", @"X:\src\Uno.Themes\src\library\Uno.Material\Styles\Controls\v2", "TextBlock.xaml"));
+			//sb.AppendLine(DiffResources(@"X:\src\old\Uno.Themes\src\library\Uno.Material\Styles\Controls\v2", @"X:\src\Uno.Themes\src\library\Uno.Material\Styles\Controls\v2", "TextBox.xaml"));
+			//sb.AppendLine(DiffResources(@"X:\src\old\Uno.Themes\src\library\Uno.Material\Styles\Controls\v2", @"X:\src\Uno.Themes\src\library\Uno.Material\Styles\Controls\v2", "ToggleButton.xaml"));
+			//sb.AppendLine(DiffResources(@"X:\src\old\Uno.Themes\src\library\Uno.Material\Styles\Controls\v2", @"X:\src\Uno.Themes\src\library\Uno.Material\Styles\Controls\v2", "ToggleSwitch.xaml"));
+			//ExtractInnerResources((ResourceDictionary)ScuffedXamlParser.Load(@"X:\src\old\Uno.Themes\src\library\Uno.Material\Styles\Controls\v2\CalendarDatePicker.xaml")).Dump();
+			//ExtractInnerResources(@"X:\src\Uno.Themes\src\library\Uno.Material\Styles\Controls\v2\ProgressRing.xaml").Dump();
+			
+			Clickable.CopyText("Click to copy result", sb.ToString()).Dump();
+			
+			(string Key, string Value)[] ExtractInnerResources(ResourceDictionary rd)
 			{
 				return rd
 					.OrderByDescending(x => x.Value is ThemeResource)
-					.Select(x => ((string Key, bool Themed, string Value))(
+					.Where(x => x.Value  is StaticResource sr && sr.Value is not Style)
+					.Select(x => ((string Key, string Value))(
 						x.Key.ToString(),
-						x.Value is ThemeResource,
 						x.Value switch
 						{
 							StaticResource sr => FormatValue(sr.Value),
@@ -703,27 +700,34 @@ public class Script
 					))
 					.ToArray();
 			}
-			void DiffResources(string oldBase, string newBase, params string[] files)
+			string DiffResources(string oldBase, string newBase, params string[] files)
 			{
 				var oldResources = ExtractInnerResources(GetResources(oldBase, files));
 				var newResources = ExtractInnerResources(GetResources(newBase, files));
 				var keys = oldResources.Concat(newResources).Select(x => x.Key).ToList();
-
+				var sb = new StringBuilder();
 				var table = Pair(oldResources, newResources, x => x.Key)
-					.OrderByDescending(x => x.Old?.Themed ?? x.New?.Themed)
-					.ThenBy(x => keys.IndexOf(x.Old?.Key ?? x.New?.Key))
+					.OrderByDescending(x => keys.IndexOf(x.Old?.Key ?? x.New?.Key))
+					//.Where(x => x.Old != x.New)
 					.Select(x => new
 					{
 						OldKey = x.Old?.Key ?? "- NEWLY ADDED -",
-						NewKey = x.New?.Key ?? "- REMOVED -",
-						Themed = CompareValue(x.Old?.Themed.ToString(), x.New?.Themed.ToString()),
+						NewKey = x.New?.Key ?? "**_REMOVED_**",
 						Value = CompareValue(x.Old?.Value, x.New?.Value),
 					})
 					.Dump(Path.GetFileNameWithoutExtension(files.First()))
-					.Where(x => x.OldKey != "- NEWLY ADDED -")
-					.ToCopyableMarkdownTable().Dump()
-					;
+					.Where(x => x.OldKey != "- NEWLY ADDED -");
+					
+					
 
+				if (table.Any())
+				{
+					var md = table.ToMarkdownTable();
+					sb.AppendLine($"## {Path.GetFileNameWithoutExtension(files.First())}");
+					sb.AppendLine();
+					sb.AppendLine(md);
+				}
+				return sb.ToString();
 				//$"# {Path.GetFileNameWithoutExtension(files[0])}".Dump();
 				//table.ToMarkdownTable().Dump();
 					
